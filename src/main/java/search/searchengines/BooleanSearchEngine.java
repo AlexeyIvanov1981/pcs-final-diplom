@@ -1,6 +1,12 @@
+package search.searchengines;
+
+import search.searchengines.SearchEngine;
+import search.searchengines.model.PageEntry;
+
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public class BooleanSearchEngine implements SearchEngine {
     //???
