@@ -10,11 +10,12 @@ import search.searchengines.model.WordFrequencies;
 import utils.FileUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class BooleanSearchEngine implements SearchEngine {
     private final IndexingResults indexingResults;
@@ -43,8 +44,8 @@ public class BooleanSearchEngine implements SearchEngine {
 
         IndexingResults indexingResults = new IndexingResults();
 
-        for (Path pdfFile: pdfFiles) {
-            try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(pdfFile.toFile())) ) {
+        for (Path pdfFile : pdfFiles) {
+            try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(pdfFile.toFile()))) {
                 final int pdfPageCount = pdfDocument.getNumberOfPages();
                 for (int i = 1; i <= pdfPageCount; ++i) {
                     final PdfPage pdfPage = pdfDocument.getPage(i);
