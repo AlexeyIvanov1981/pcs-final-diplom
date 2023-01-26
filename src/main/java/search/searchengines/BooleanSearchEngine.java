@@ -18,68 +18,67 @@ import java.util.List;
 import java.util.Map;
 
 public class BooleanSearchEngine implements SearchEngine {
-    private final IndexingResults indexingResults;
+    private final IndexingResults wordIndex = new IndexingResults();
 
     public BooleanSearchEngine(File pdfsDir) {
-        indexingResults = indexPdfs(pdfsDir);
+        indexPdfs(pdfsDir);
+        sortIndex();
     }
 
     @Override
     public List<PageEntry> search(String word) {
-        List<PageEntry> pageEntriesForWord = indexingResults.get(word);
-
-        Collections.sort(pageEntriesForWord);
-
-        return pageEntriesForWord;
+        return this.wordIndex.getOrDefault(word, new ArrayList<>());
     }
 
-
-    private IndexingResults indexPdfs(File pdfsDir) {
+    private void indexPdfs(File pdfsDir) {
         List<Path> pdfFiles;
         try {
             pdfFiles = FileUtils.getFilesFromFolderByExtension(pdfsDir.toPath(), FileUtils.PDF_FILE_EXTENSION);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to read pdfs from " + pdfsDir + " folder.");
+            throw new RuntimeException("Unable to read pdf files from " + pdfsDir + " folder.", e);
         }
-
-        IndexingResults indexingResults = new IndexingResults();
 
         for (Path pdfFile : pdfFiles) {
             try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(pdfFile.toFile()))) {
                 final int pdfPageCount = pdfDocument.getNumberOfPages();
                 for (int i = 1; i <= pdfPageCount; ++i) {
                     final PdfPage pdfPage = pdfDocument.getPage(i);
-                    final String pdfPageText = PdfTextExtractor.getTextFromPage(pdfPage);
-                    final String[] words = pdfPageText.split("\\P{IsAlphabetic}+");
 
-                    WordFrequencies wordsFrequencies = new WordFrequencies();
-                    for (String word : words) {
-                        if (word.isEmpty()) {
-                            continue;
-                        }
-                        word = word.toLowerCase();
-                        wordsFrequencies.put(word, wordsFrequencies.getOrDefault(word, 0) + 1);
-                    }
-
-                    for (Map.Entry<String, Integer> wordFrequency : wordsFrequencies.entrySet()) {
-                        final PageEntry pageEntry = new PageEntry(pdfFile.getFileName().toString(), i, wordFrequency.getValue());
-
-                        if (indexingResults.containsKey(wordFrequency.getKey())) {
-                            final List<PageEntry> indexingResultForWord = indexingResults.get(wordFrequency.getKey());
-
-                            List<PageEntry> updatedIndexingResultForWord = new ArrayList<>(indexingResultForWord);
-                            updatedIndexingResultForWord.add(pageEntry);
-                            indexingResults.put(wordFrequency.getKey(), updatedIndexingResultForWord);
-                        } else {
-                            indexingResults.put(wordFrequency.getKey(), List.of(pageEntry));
-                        }
-                    }
+                    final WordFrequencies wordFrequencies = calculateWordFrequenciesForPage(pdfPage);
+                    addWordFrequenciesToIndex(pdfFile.getFileName().toString(), i, wordFrequencies);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Unable to read pdf document " + pdfFile.getFileName().toString() + ".", e);
             }
         }
+    }
 
-        return indexingResults;
+    private WordFrequencies calculateWordFrequenciesForPage(PdfPage page) {
+        final String pdfPageText = PdfTextExtractor.getTextFromPage(page);
+        final String[] words = pdfPageText.split("\\P{IsAlphabetic}+");
+
+        WordFrequencies wordFrequencies = new WordFrequencies();
+        for (String word : words) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            word = word.toLowerCase();
+            wordFrequencies.put(word, wordFrequencies.getOrDefault(word, 0) + 1);
+        }
+
+        return wordFrequencies;
+    }
+
+    private void addWordFrequenciesToIndex(String filename, int page, WordFrequencies wordFrequencies) {
+        for (Map.Entry<String, Integer> wordFrequency : wordFrequencies.entrySet()) {
+            final PageEntry pageEntry = new PageEntry(filename, page, wordFrequency.getValue());
+            this.wordIndex.computeIfAbsent(wordFrequency.getKey(), (a) -> new ArrayList<>()).add(pageEntry);
+        }
+    }
+
+    private void sortIndex() {
+        for (Map.Entry<String, List<PageEntry>> wordFrequency: this.wordIndex.entrySet()) {
+            Collections.sort(wordFrequency.getValue());
+        }
     }
 }

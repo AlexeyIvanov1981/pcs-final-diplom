@@ -1,14 +1,11 @@
 import search.searchengines.BooleanSearchEngine;
+import settings.ProjectSettings;
 
 import java.io.File;
 
 public class Main {
-    public static void main(String[] args) throws Exception {
-        BooleanSearchEngine engine = new BooleanSearchEngine(new File("pdfs"));
+    public static void main(String[] args) {
+        BooleanSearchEngine engine = new BooleanSearchEngine(new File(ProjectSettings.PDFS_FOLDER_PATH));
         System.out.println(engine.search("бизнес"));
-
-        // здесь создайте сервер, который отвечал бы на нужные запросы
-        // слушать он должен порт 8989
-        // отвечать на запросы /{word} -> возвращённое значение метода search(word) в JSON-формате
     }
 }

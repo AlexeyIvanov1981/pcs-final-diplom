@@ -14,6 +14,14 @@ public final class FileUtils {
         throw new UnsupportedOperationException("You're trying to create instance of utility class.");
     }
 
+    /**
+     * Get files from selected folder and its sub-folders by specified file extension.
+     *
+     * @param pathToFolder  folder to get files from.
+     * @param fileExtension file extension to filter necessary files.
+     * @return list of Paths to found files.
+     * @throws IOException in case of IO-related problems.
+     */
     public static List<Path> getFilesFromFolderByExtension(Path pathToFolder, String fileExtension)
             throws IOException {
         if (!Files.isDirectory(pathToFolder)) {
